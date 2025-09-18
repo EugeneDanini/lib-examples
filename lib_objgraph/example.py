@@ -1,10 +1,10 @@
 import objgraph
 
+from config import BASE_PATH, EXAMPLE_OBJECT
+
 
 def run():
-    a = 1
-    b = {'c': 2}
-    objgraph.show_refs([b], filename='example.png')
+    objgraph.show_refs(EXAMPLE_OBJECT, filename=f'{BASE_PATH}/example.png')
     objgraph.show_most_common_types()
 
 
