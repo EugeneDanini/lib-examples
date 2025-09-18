@@ -1,6 +1,10 @@
 from pympler import asizeof, classtracker, tracker
 
-from config import EXAMPLE_OBJECT
+EXAMPLE_OBJECT = {
+    'a': 'x',
+    'b': 'y',
+    'c': 'z',
+}
 
 
 def run():
