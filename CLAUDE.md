@@ -5,9 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 
 This is a Python learning/reference repository containing examples and demonstrations of:
-- **Python library usage** (memory profiling, object graph visualization, memory analysis, Google ADK)
+- **Python library usage** (memory-profiler, pympler, objgraph, google-adk)
 - **SOLID principles** (SRP, OCP, LSP, ISP, DIP)
-- **Design patterns** (Circuit Breaker, Observer, Singleton, Interceptor, Retry Storm, Throttle)
+- **Design patterns** (Circuit Breaker, Observer, Singleton, Interceptor, Retry Storm, Throttle, Dependency Injection, Single Point of Failure)
 - **Distributed systems patterns** (Robustness, Scalability, Performance, Availability, Extensibility, Resiliency, CAP Theorem)
 - **Non-functional requirements** (Performance, Security, Reliability, Scalability, Maintainability, Usability, Observability)
 - **System design frameworks** (RESHADED approach)
@@ -107,17 +107,24 @@ Each `lib_*/example.py` follows a similar structure:
 - Implement a `run()` function containing the demonstration
 - Include `if __name__ == '__main__'` guard
 
+**Existing library examples:**
+- `lib_memory_profiler/`: Line-by-line memory usage profiling with `mprof` CLI tool
+- `lib_pympler/`: Memory tracking with `asizeof`, `classtracker`, and `tracker` modules
+- `lib_objgraph/`: Object reference visualization (outputs PNG files with graphviz)
+- `lib_google_adk/`: Google ADK (Agent Development Kit) demonstrations
+
 ### AI Examples Directory
 Contains **reference implementations** demonstrating software engineering concepts. All files are runnable and self-contained:
 
 - **solid/**: SOLID principles (SRP, OCP, LSP, ISP, DIP) with concrete examples
-- **patterns/**: Design patterns (Observer, Singleton, Circuit Breaker, etc.) with runnable demonstrations
+- **patterns/**: Design patterns (Observer, Singleton, Circuit Breaker, Dependency Injection, Single Point of Failure, Retry Storm, Throttle, Interceptor) with runnable demonstrations
 - **distributed_systems/**: Comprehensive distributed systems patterns
   - Each file demonstrates a key aspect: robustness, scalability, performance, availability, extensibility, resiliency
   - CAP theorem with CP, AP, and Quorum system implementations
   - All examples include demonstrations that can be executed directly
 - **non_functional_requirements.py**: Seven categories of NFRs with measurable, testable implementations
-- **reshaded.md**: Documentation of the RESHADED system design framework
+- **reshaded.md**: Documentation of the RESHADED system design framework (Requirements, Estimation, Storage, High-level design, API design, Detailed design, Evaluation, Deep-dive)
+- **isolation.sql**: SQL transaction isolation level demonstrations (READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ, SERIALIZABLE)
 
 Each Python file in ai_examples/ follows this pattern:
 - Comprehensive docstring explaining the concept
@@ -131,3 +138,5 @@ The repository uses a comprehensive requirements.txt with many libraries. When w
 
 ### Naming Convention
 The repository has migrated from `Docs/` to `ai_examples/` for educational content. When referencing or creating new examples, use the `ai_examples/` directory structure.
+
+**Note**: The throttle pattern file is named `throtlle.py` (with a typo) - reference it with this spelling when running or importing it.
