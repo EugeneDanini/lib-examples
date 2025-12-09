@@ -18,5 +18,6 @@ EXAMPLE_FUNCTION = _example_function
 def run():
     return EXAMPLE_FUNCTION()
 
+
 if __name__ == '__main__':
     run()

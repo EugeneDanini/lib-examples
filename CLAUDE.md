@@ -35,19 +35,19 @@ lib-examples/
 │   ├── non_functional_requirements.py
 │   ├── reshaded.md              # System design framework guide
 │   └── isolation.sql            # SQL transaction isolation examples
-├── requirements.txt             # All dependencies
-└── new.sh                       # Script to add new library examples
+├── .venv/                       # Symlink to most recent library's .venv
+└── lib                          # Script to add new library examples
 ```
 
 ## Development Commands
 
 ### Environment Setup
 ```bash
-# Activate virtual environment
+# Activate virtual environment (shared across all library examples)
 source .venv/bin/activate
 
-# Install dependencies
-pip install -r requirements.txt
+# Install dependencies for a specific library
+pip install -r lib_<library_name>/requirements.txt
 ```
 
 ### Running Examples
@@ -86,17 +86,17 @@ python ai_examples/non_functional_requirements.py
 
 ### Adding New Library Examples
 
-Use the `new.sh` script to set up a new library example:
+Use the `lib` script to set up a new library example:
 ```bash
-./new.sh <library-name>
+./lib <library-name>
 ```
 
 This script:
-1. Uninstalls all current packages
-2. Reinstalls from requirements.txt
-3. Installs the specified library
-4. Updates requirements.txt with the new frozen dependencies
-5. Creates `lib_<library_name>/` directory with `__init__.py` and `example.py`
+1. Creates `lib_<library_name>/` directory with `__init__.py` and `example.py` boilerplate
+2. Creates a dedicated `.venv/` inside `lib_<library_name>/`
+3. Creates a root-level `.venv` symlink pointing to the most recently created library's virtual environment
+4. If `lib_<library_name>/requirements.txt` exists: installs from it
+5. If no requirements.txt: installs the library and freezes dependencies to `requirements.txt`
 
 ## Architecture Notes
 
@@ -112,6 +112,8 @@ Each `lib_*/example.py` follows a similar structure:
 - `lib_pympler/`: Memory tracking with `asizeof`, `classtracker`, and `tracker` modules
 - `lib_objgraph/`: Object reference visualization (outputs PNG files with graphviz)
 - `lib_google_adk/`: Google ADK (Agent Development Kit) demonstrations
+  - Contains `text_agent/` subdirectory with agent implementation
+  - Run with `python lib_google_adk/example.py` which launches the ADK web interface
 
 ### AI Examples Directory
 Contains **reference implementations** demonstrating software engineering concepts. All files are runnable and self-contained:
@@ -133,8 +135,12 @@ Each Python file in ai_examples/ follows this pattern:
 - `main()` function that runs all demonstrations
 - Direct execution via `if __name__ == '__main__'`
 
-### Dependencies
-The repository uses a comprehensive requirements.txt with many libraries. When working with a specific example, only the relevant library's imports are used in that module.
+### Dependencies and Virtual Environments
+- Each `lib_*/` directory has its own `.venv/` with isolated dependencies
+- Root-level `.venv` is a symlink pointing to the most recently created library's virtual environment
+- Each library example has its own `requirements.txt` with frozen dependencies
+- When working with a specific example, activate its dedicated virtual environment or use the root symlink
+- The `lib` script manages virtual environment creation and dependency installation automatically
 
 ### Naming Convention
 The repository has migrated from `Docs/` to `ai_examples/` for educational content. When referencing or creating new examples, use the `ai_examples/` directory structure.

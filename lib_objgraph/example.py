@@ -8,7 +8,7 @@ EXAMPLE_OBJECT = {
 
 
 def run():
-    objgraph.show_refs(EXAMPLE_OBJECT, filename='example.png')
+    objgraph.show_refs(EXAMPLE_OBJECT, filename='lib_objgraph/example.png')
     objgraph.show_most_common_types()
 
 

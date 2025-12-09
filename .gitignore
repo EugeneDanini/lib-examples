@@ -1,3 +1,4 @@
+.env
+.venv
 lib_objgraph/example.png
 mprofile_*.dat
-.env

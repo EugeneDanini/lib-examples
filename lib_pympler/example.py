@@ -17,5 +17,6 @@ def run():
     _classtracker.create_snapshot()
     _classtracker.stats.print_summary()
 
+
 if __name__ == '__main__':
     run()
