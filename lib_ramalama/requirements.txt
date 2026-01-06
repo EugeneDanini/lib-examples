@@ -1,0 +1,11 @@
+argcomplete==3.6.3
+attrs==25.4.0
+Jinja2==3.1.6
+jsonschema==4.25.1
+jsonschema-specifications==2025.9.1
+MarkupSafe==3.0.3
+PyYAML==6.0.3
+ramalama==0.16.0
+referencing==0.37.0
+rpds-py==0.30.0
+typing_extensions==4.15.0

@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Repository Overview
 
 This is a Python learning/reference repository containing examples and demonstrations of:
-- **Python library usage** (memory-profiler, pympler, objgraph, google-adk)
+- **Python library usage** (memory-profiler, pympler, objgraph, line-profiler, google-adk, langchain-ollama, instructlab, ramalama, fusionbrain-sdk-python)
 - **SOLID principles** (SRP, OCP, LSP, ISP, DIP)
 - **Design patterns** (Circuit Breaker, Observer, Singleton, Interceptor, Retry Storm, Throttle, Dependency Injection, Single Point of Failure)
 - **Distributed systems patterns** (Robustness, Scalability, Performance, Availability, Extensibility, Resiliency, CAP Theorem)
@@ -69,6 +69,38 @@ python lib_objgraph/example.py
 # Creates example.png visualizing object references
 ```
 
+**Line Profiler specific:**
+```bash
+cd lib_line_profiler/
+kernprof -l example.py
+python -m line_profiler example.py.lprof
+```
+
+**Langchain Ollama (requires Ollama installation):**
+```bash
+# First install and setup Ollama
+curl -fsSL https://ollama.com/install.sh | sh
+ollama pull mistral:latest
+# Run the example
+python lib_langchain_ollama/example.py
+```
+
+**InstructLab:**
+```bash
+# Initial setup
+ilab config init
+ilab model download
+# Serve and chat with the model
+ilab model serve  # In one terminal
+ilab model chat   # In another terminal
+```
+
+**Ramalama:**
+```bash
+# Serve models from Ollama
+ramalama serve phi3:latest
+```
+
 **AI Examples (educational/reference code):**
 ```bash
 # SOLID principles
@@ -111,9 +143,16 @@ Each `lib_*/example.py` follows a similar structure:
 - `lib_memory_profiler/`: Line-by-line memory usage profiling with `mprof` CLI tool
 - `lib_pympler/`: Memory tracking with `asizeof`, `classtracker`, and `tracker` modules
 - `lib_objgraph/`: Object reference visualization (outputs PNG files with graphviz)
+- `lib_line_profiler/`: Function-level profiling showing time spent per line of code
 - `lib_google_adk/`: Google ADK (Agent Development Kit) demonstrations
   - Contains `text_agent/` subdirectory with agent implementation
   - Run with `python lib_google_adk/example.py` which launches the ADK web interface
+- `lib_langchain_ollama/`: LangChain integration with Ollama local LLMs for agent creation
+- `lib_instructlab/`: InstructLab for model training and fine-tuning
+  - Contains `qna.yaml` example for creating custom knowledge datasets
+  - Supports taxonomy-based knowledge injection
+- `lib_ramalama/`: Wrapper for serving models from Ollama
+- `lib_fusionbrain-sdk-python/`: Integration with FusionBrain AI services
 
 ### AI Examples Directory
 Contains **reference implementations** demonstrating software engineering concepts. All files are runnable and self-contained:
