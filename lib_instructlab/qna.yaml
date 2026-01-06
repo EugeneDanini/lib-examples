@@ -1,0 +1,86 @@
+version: 3
+domain: Test domain
+created_by: EugeneDanini
+seed_examples:
+  - context: |
+        First test context
+    questions_and_answers:
+      - question: |
+           Test1-1
+        answer: |
+           Chest1-1
+      - question: |
+          Test1-2
+        answer: |
+          Chest1-2
+      - question: |
+          Test1-3
+        answer: |
+          Chest1-3
+  - context: |
+      Second test context
+    questions_and_answers:
+      - question: |
+          Test2-1
+        answer: |
+          Chest2-1
+      - question: |
+          Test2-2
+        answer: |
+          Chest2-2
+      - question: |
+          Test2-3
+        answer: |
+          Chest2-3
+  - context: |
+      Third test context
+    questions_and_answers:
+      - question: |
+          Test3-1
+        answer: |
+          Chest3-1
+      - question: |
+          Test3-2
+        answer: |
+          Chest3-2
+      - question: |
+          Test3-3
+        answer: |
+          Chest3-3
+  - context: |
+      Fourth test context
+    questions_and_answers:
+      - question: |
+          Test4-1
+        answer: |
+          Chest4-1
+      - question: |
+          Test4-2
+        answer: |
+          Chest4-2
+      - question: |
+          Test4-3
+        answer: |
+          Chest4-3
+  - context: |
+      Fifth test context
+    questions_and_answers:
+      - question: |
+          Test5-1
+        answer: |
+          Chest5-1
+      - question: |
+          Test5-2
+        answer: |
+          Chest5-2
+      - question: |
+          Test5-3
+        answer: |
+          Chest5-3
+document_outline: |
+  Test document
+document:
+  repo: https://github.com/EugeneDanini/lib-examples.git
+  commit: 7ef5ff498c0b37a37f95ed757439989aa07c00f0
+  patterns:
+    - CLAUDE.md
