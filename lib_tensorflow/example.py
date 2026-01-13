@@ -12,7 +12,7 @@ logging.basicConfig(
 
 
 class TextClassifier:
-    """A neural network text classifier using TensorFlow."""
+    """A neural network text classifier using TensorFlow v2 and Keras."""
 
     def __init__(
         self,
@@ -34,13 +34,8 @@ class TextClassifier:
         self.word2index = None
         self.total_words = 0
 
-        # TensorFlow components
-        self.input_tensor = None
-        self.output_tensor = None
-        self.prediction = None
-        self.loss = None
-        self.optimizer = None
-        self.saver = None
+        # TensorFlow/Keras model
+        self.model = None
 
     def build_vocab(self, texts):
         """Build vocabulary from texts."""
@@ -57,169 +52,163 @@ class TextClassifier:
 
     def text_to_vector(self, text):
         """Convert text to vector representation."""
-        vector = np.zeros(self.total_words, dtype=float)
+        vector = np.zeros(self.total_words, dtype=np.float32)
         for word in text.split(' '):
             word_lower = word.lower()
             if word_lower in self.word2index:
                 vector[self.word2index[word_lower]] += 1
         return vector
 
-    def category_to_vector(self, category):
-        """Convert category index to one-hot encoded vector."""
-        y = np.zeros(self.n_classes, dtype=float)
-        y[category] = 1.0
-        return y
+    def texts_to_vectors(self, texts):
+        """Convert multiple texts to vectors."""
+        if isinstance(texts, str):
+            texts = [texts]
+        return np.array([self.text_to_vector(text) for text in texts])
 
-    def get_batch(self, data, i, batch_size):
-        """Get a batch of training data."""
-        start_idx = i * batch_size
-        end_idx = start_idx + batch_size
-
-        texts = data.data[start_idx:end_idx]
-        categories = data.target[start_idx:end_idx]
-
-        batch_vectors = [self.text_to_vector(text) for text in texts]
-        batch_labels = [self.category_to_vector(cat) for cat in categories]
-
-        return np.array(batch_vectors), np.array(batch_labels)
-
-    def multilayer_perceptron(self, input_tensor, weights, biases):
-        """Build a multilayer perceptron model."""
-        # First hidden layer with RELU activation
-        layer_1 = tf.nn.relu(tf.add(tf.matmul(input_tensor, weights['h1']), biases['b1']))
-
-        # Second hidden layer with RELU activation
-        layer_2 = tf.nn.relu(tf.add(tf.matmul(layer_1, weights['h2']), biases['b2']))
-
-        # Output layer
-        out_layer = tf.matmul(layer_2, weights['out']) + biases['out']
-
-        return out_layer
+    def prepare_dataset(self, data):
+        """Convert dataset to tensors."""
+        x = self.texts_to_vectors(data.data)
+        # Convert to one-hot encoding
+        y = tf.keras.utils.to_categorical(data.target, num_classes=self.n_classes)
+        return x, y
 
     def build_model(self):
-        """Build the neural network model."""
-        tf.compat.v1.disable_eager_execution()
-        tf.compat.v1.disable_v2_behavior()
+        """Build the neural network model using Keras Sequential API."""
+        self.model = tf.keras.Sequential([
+            # Input layer
+            tf.keras.layers.InputLayer(input_shape=(self.total_words,)),
 
-        # Define placeholders
-        self.input_tensor = tf.compat.v1.placeholder(
-            tf.float32, [None, self.total_words], name="input"
-        )
-        self.output_tensor = tf.compat.v1.placeholder(
-            tf.float32, [None, self.n_classes], name="output"
-        )
+            # First hidden layer with RELU activation
+            tf.keras.layers.Dense(
+                self.n_hidden_1,
+                activation='relu',
+                kernel_initializer='random_normal',
+                bias_initializer='random_normal'
+            ),
 
-        # Define weights and biases
-        weights = {
-            'h1': tf.Variable(tf.random.normal([self.total_words, self.n_hidden_1])),
-            'h2': tf.Variable(tf.random.normal([self.n_hidden_1, self.n_hidden_2])),
-            'out': tf.Variable(tf.random.normal([self.n_hidden_2, self.n_classes]))
-        }
-        biases = {
-            'b1': tf.Variable(tf.random.normal([self.n_hidden_1])),
-            'b2': tf.Variable(tf.random.normal([self.n_hidden_2])),
-            'out': tf.Variable(tf.random.normal([self.n_classes]))
-        }
+            # Second hidden layer with RELU activation
+            tf.keras.layers.Dense(
+                self.n_hidden_2,
+                activation='relu',
+                kernel_initializer='random_normal',
+                bias_initializer='random_normal'
+            ),
 
-        # Build model
-        self.prediction = self.multilayer_perceptron(self.input_tensor, weights, biases)
-
-        # Define loss and optimizer
-        self.loss = tf.reduce_mean(
-            tf.nn.softmax_cross_entropy_with_logits(
-                logits=self.prediction, labels=self.output_tensor
+            # Output layer with softmax activation
+            tf.keras.layers.Dense(
+                self.n_classes,
+                kernel_initializer='random_normal',
+                bias_initializer='random_normal'
             )
-        )
-        self.optimizer = tf.compat.v1.train.AdamOptimizer(
-            learning_rate=self.learning_rate
-        ).minimize(self.loss)
+        ])
 
-        # Initialize saver
-        self.saver = tf.compat.v1.train.Saver()
+        # Compile model
+        self.model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=self.learning_rate),
+            loss=tf.keras.losses.CategoricalCrossentropy(from_logits=True),
+            metrics=['accuracy']
+        )
 
         logging.info("Model built successfully")
+        self.model.summary(print_fn=logging.info)
 
-    def train(self, train_data, test_data, model_path="/tmp/model.ckpt"):
+    def train(self, train_data, test_data, model_path="/tmp/model.keras"):
         """Train the model."""
-        init = tf.compat.v1.global_variables_initializer()
+        # Prepare datasets
+        x_train, y_train = self.prepare_dataset(train_data)
+        x_test, y_test = self.prepare_dataset(test_data)
 
-        with tf.compat.v1.Session() as sess:
-            sess.run(init)
+        logging.info("Training dataset shape: X=%s, y=%s", x_train.shape, y_train.shape)
+        logging.info("Test dataset shape: X=%s, y=%s", x_test.shape, y_test.shape)
 
-            # Training cycle
-            total_batch = int(len(train_data.data) / self.batch_size)
+        # Create a custom callback for logging
+        class LoggingCallback(tf.keras.callbacks.Callback):
+            def on_epoch_end(self, epoch, logs=None):
+                logging.info(
+                    "Epoch: %04d loss=%.9f accuracy=%.4f val_loss=%.9f val_accuracy=%.4f",
+                    epoch + 1,
+                    logs.get('loss', 0),
+                    logs.get('accuracy', 0),
+                    logs.get('val_loss', 0),
+                    logs.get('val_accuracy', 0)
+                )
 
-            for epoch in range(self.training_epochs):
-                avg_cost = 0.0
+        # Train the model
+        history = self.model.fit(
+            x_train,
+            y_train,
+            batch_size=self.batch_size,
+            epochs=self.training_epochs,
+            validation_data=(x_test, y_test),
+            callbacks=[LoggingCallback()],
+            verbose=0  # We use our custom callback for logging
+        )
 
-                # Loop over all batches
-                for i in range(total_batch):
-                    batch_x, batch_y = self.get_batch(train_data, i, self.batch_size)
+        logging.info("Optimization Finished!")
 
-                    # Run optimization
-                    c, _ = sess.run(
-                        [self.loss, self.optimizer],
-                        feed_dict={self.input_tensor: batch_x, self.output_tensor: batch_y}
-                    )
-                    avg_cost += c / total_batch
+        # Evaluate on test data
+        test_loss, test_accuracy = self.model.evaluate(x_test, y_test, verbose=0)
+        logging.info("Test Accuracy: %.4f", test_accuracy)
+        logging.info("Test Loss: %.4f", test_loss)
 
-                # Log progress
-                logging.info("Epoch: %04d loss=%.9f", epoch + 1, avg_cost)
+        # Save the model
+        self.model.save(model_path)
+        logging.info("Model saved in path: %s", model_path)
 
-            logging.info("Optimization Finished!")
+        return history
 
-            # Evaluate on test data
-            correct_prediction = tf.equal(
-                tf.argmax(self.prediction, 1),
-                tf.argmax(self.output_tensor, 1)
-            )
-            accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
-
-            total_test_data = len(test_data.target)
-            batch_x_test, batch_y_test = self.get_batch(test_data, 0, total_test_data)
-
-            test_accuracy = accuracy.eval({
-                self.input_tensor: batch_x_test,
-                self.output_tensor: batch_y_test
-            })
-            logging.info("Test Accuracy: %.4f", test_accuracy)
-
-            # Save the model
-            save_path = self.saver.save(sess, model_path)
-            logging.info("Model saved in path: %s", save_path)
-
-    def predict(self, texts, model_path="/tmp/model.ckpt"):
+    def predict(self, texts, model_path=None):
         """Predict categories for given texts."""
-        with tf.compat.v1.Session() as sess:
-            self.saver.restore(sess, model_path)
-            logging.info("Model restored.")
+        if model_path:
+            self.model = tf.keras.models.load_model(model_path)
+            logging.info("Model restored from: %s", model_path)
 
-            # Convert texts to vectors
-            if isinstance(texts, str):
-                texts = [texts]
+        # Convert texts to vectors
+        input_vectors = self.texts_to_vectors(texts)
 
-            input_vectors = np.array([self.text_to_vector(text) for text in texts])
+        # Make prediction (get logits)
+        logits = self.model.predict(input_vectors, verbose=0)
 
-            # Make prediction
-            classifications = sess.run(
-                tf.argmax(self.prediction, 1),
-                feed_dict={self.input_tensor: input_vectors}
-            )
+        # Convert to class predictions
+        predictions = tf.argmax(logits, axis=1).numpy()
 
-            return classifications
+        return predictions
+
+    def predict_proba(self, texts, model_path=None):
+        """Predict class probabilities for given texts."""
+        if model_path:
+            self.model = tf.keras.models.load_model(model_path)
+            logging.info("Model restored from: %s", model_path)
+
+        # Convert texts to vectors
+        input_vectors = self.texts_to_vectors(texts)
+
+        # Make prediction (get logits)
+        logits = self.model.predict(input_vectors, verbose=0)
+
+        # Apply softmax to get probabilities
+        probabilities = tf.nn.softmax(logits).numpy()
+
+        return probabilities
 
 
 def demo_basic_tensorflow():
-    """Demonstrate basic TensorFlow operations."""
-    logging.info("=== Basic TensorFlow Demo ===")
+    """Demonstrate basic TensorFlow v2 operations."""
+    logging.info("=== Basic TensorFlow v2 Demo ===")
 
-    my_graph = tf.Graph()
-    with tf.compat.v1.Session(graph=my_graph) as sess:
-        x = tf.constant([1, 3, 6])
-        y = tf.constant([1, 1, 1])
-        op = tf.add(x, y)
-        result = sess.run(fetches=op)
-        logging.info("Result: %s", result)
+    # TensorFlow v2 uses eager execution by default - no sessions needed
+    x = tf.constant([1, 3, 6])
+    y = tf.constant([1, 1, 1])
+    result = tf.add(x, y)
+
+    logging.info("Result: %s", result.numpy())
+
+    # Demonstrate tensor operations
+    a = tf.constant([[1, 2], [3, 4]])
+    b = tf.constant([[5, 6], [7, 8]])
+    matmul_result = tf.matmul(a, b)
+
+    logging.info("Matrix multiplication result:\n%s", matmul_result.numpy())
 
 
 def demo_text_vectorization():
@@ -251,11 +240,42 @@ def demo_text_vectorization():
     logging.info("Text '%s' vectorized: %s", single_word, matrix)
 
 
+def demo_keras_sequential():
+    """Demonstrate Keras Sequential API."""
+    logging.info("=== Keras Sequential API Demo ===")
+
+    # Create a simple sequential model
+    model = tf.keras.Sequential([
+        tf.keras.layers.Dense(64, activation='relu', input_shape=(10,)),
+        tf.keras.layers.Dense(32, activation='relu'),
+        tf.keras.layers.Dense(3, activation='softmax')
+    ])
+
+    model.compile(
+        optimizer='adam',
+        loss='categorical_crossentropy',
+        metrics=['accuracy']
+    )
+
+    # Generate dummy data
+    x_dummy = np.random.random((100, 10))
+    y_dummy = tf.keras.utils.to_categorical(np.random.randint(3, size=(100, 1)), num_classes=3)
+
+    # Train for a few epochs
+    logging.info("Training simple model...")
+    model.fit(x_dummy, y_dummy, epochs=3, batch_size=32, verbose=0)
+
+    # Make predictions
+    predictions = model.predict(x_dummy[:5], verbose=0)
+    logging.info("Sample predictions shape: %s", predictions.shape)
+
+
 def run():
     """Main function to run the text classification example."""
     # Run basic demos
     demo_basic_tensorflow()
     demo_text_vectorization()
+    demo_keras_sequential()
 
     # Text classification with neural network
     logging.info("=== Text Classification with Neural Network ===")
@@ -288,10 +308,6 @@ def run():
     if 'the' in classifier.word2index:
         logging.info("Index of the word 'the': %d", classifier.word2index['the'])
 
-    # Demo batch creation
-    batch_x, batch_y = classifier.get_batch(newsgroups_train, 1, 100)
-    logging.info("Batch shape - texts: %s, labels: %s", batch_x.shape, batch_y.shape)
-
     # Build and train model
     classifier.build_model()
     classifier.train(newsgroups_train, newsgroups_test)
@@ -307,6 +323,10 @@ def run():
     prediction = classifier.predict(test_text)
     logging.info("Predicted category: %s", prediction)
 
+    # Predict with probabilities
+    probabilities = classifier.predict_proba(test_text)
+    logging.info("Prediction probabilities: %s", probabilities)
+
     # Multiple predictions
     test_texts = newsgroups_test.data[:10]
     predictions = classifier.predict(test_texts)
@@ -314,6 +334,10 @@ def run():
 
     logging.info("Predicted categories (10 samples): %s", predictions)
     logging.info("Correct categories (10 samples): %s", correct_categories)
+
+    # Calculate accuracy
+    accuracy = np.sum(predictions == correct_categories) / len(correct_categories)
+    logging.info("Sample accuracy (10 samples): %.2f%%", accuracy * 100)
 
 
 if __name__ == '__main__':
