@@ -1,7 +1,14 @@
+import logging
 import numpy as np
 import tensorflow as tf
 from collections import Counter
 from sklearn.datasets import fetch_20newsgroups
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 my_graph = tf.Graph()
 with tf.compat.v1.Session(graph=my_graph) as sess:
@@ -9,7 +16,7 @@ with tf.compat.v1.Session(graph=my_graph) as sess:
     y = tf.constant([1,1,1])
     op = tf.add(x,y)
     result = sess.run(fetches=op)
-    print(result)
+    logging.info("Result: %s", result)
 
 vocab = Counter()
 
@@ -36,25 +43,25 @@ matrix = np.zeros((total_words), dtype=float)
 for word in text.split():
     matrix[word2index[word.lower()]] += 1
 
-print("Hi from Brazil:", matrix)
+logging.info("Hi from Brazil: %s", matrix)
 
 matrix = np.zeros((total_words), dtype=float)
 text = "Hi"
 for word in text.split():
     matrix[word2index[word.lower()]] += 1
 
-print("Hi:", matrix)
+logging.info("Hi: %s", matrix)
 
 categories = ["comp.graphics","sci.space","rec.sport.baseball"]
 newsgroups_train = fetch_20newsgroups(subset='train', categories=categories)
 newsgroups_test = fetch_20newsgroups(subset='test', categories=categories)
 
 
-print('total texts in train:',len(newsgroups_train.data))
-print('total texts in test:',len(newsgroups_test.data))
+logging.info("Total texts in train: %d", len(newsgroups_train.data))
+logging.info("Total texts in test: %d", len(newsgroups_test.data))
 
-print('text',newsgroups_train.data[0])
-print('category:',newsgroups_train.target[0])
+logging.info("Text: %s", newsgroups_train.data[0])
+logging.info("Category: %d", newsgroups_train.target[0])
 
 vocab = Counter()
 
@@ -66,7 +73,7 @@ for text in newsgroups_test.data:
     for word in text.split(' '):
         vocab[word.lower()] += 1
 
-print("Total words:",len(vocab))
+logging.info("Total words: %d", len(vocab))
 
 total_words = len(vocab)
 
@@ -81,7 +88,7 @@ def get_word_2_index(vocab):
 
 word2index = get_word_2_index(vocab)
 
-print("Index of the word 'the':", word2index['the'])
+logging.info("Index of the word 'the': %d", word2index['the'])
 
 
 def text_to_vector(text):
@@ -120,9 +127,9 @@ def get_batch(df, i, batch_size):
 
     return np.array(batches), np.array(results)
 
-print("Each batch has 100 texts and each matrix has 119930 elements (words):",get_batch(newsgroups_train,1,100)[0].shape)
+logging.info("Each batch has 100 texts and each matrix has 119930 elements (words): %s", get_batch(newsgroups_train,1,100)[0].shape)
 
-print("Each batch has 100 labels and each matrix has 3 elements (3 categories):",get_batch(newsgroups_train,1,100)[1].shape)
+logging.info("Each batch has 100 labels and each matrix has 3 elements (3 categories): %s", get_batch(newsgroups_train,1,100)[1].shape)
 
 # Parameters
 learning_rate = 0.01
@@ -202,8 +209,8 @@ with tf.compat.v1.Session() as sess:
             avg_cost += c / total_batch
         # Display logs per epoch step
         if epoch % display_step == 0:
-            print("Epoch:", '%04d' % (epoch + 1), "loss={:.9f}".format(avg_cost))
-    print("Optimization Finished!")
+            logging.info("Epoch: %04d loss=%.9f", epoch + 1, avg_cost)
+    logging.info("Optimization Finished!")
 
     # Test model
     correct_prediction = tf.equal(tf.argmax(prediction, 1), tf.argmax(output_tensor, 1))
@@ -211,17 +218,17 @@ with tf.compat.v1.Session() as sess:
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, "float"))
     total_test_data = len(newsgroups_test.target)
     batch_x_test, batch_y_test = get_batch(newsgroups_test, 0, total_test_data)
-    print("Accuracy:", accuracy.eval({input_tensor: batch_x_test, output_tensor: batch_y_test}))
+    logging.info("Accuracy: %s", accuracy.eval({input_tensor: batch_x_test, output_tensor: batch_y_test}))
 
     # [NEW] Save the variables to disk
     save_path = saver.save(sess, "/tmp/model.ckpt")
-    print("Model saved in path: %s" % save_path)
+    logging.info("Model saved in path: %s", save_path)
 
 text_for_prediction = newsgroups_test.data[5]
 
-print('text',text_for_prediction)
+logging.info("Text: %s", text_for_prediction)
 
-print("Text correct category:", newsgroups_test.target[5])
+logging.info("Text correct category: %d", newsgroups_test.target[5])
 
 # Convert text to vector so we can send it to our model
 vector_txt = text_to_vector(text)
@@ -233,10 +240,10 @@ saver = tf.compat.v1.train.Saver()
 
 with tf.compat.v1.Session() as sess:
     saver.restore(sess, "/tmp/model.ckpt")
-    print("Model restored.")
+    logging.info("Model restored.")
 
     classification = sess.run(tf.argmax(prediction, 1), feed_dict={input_tensor: input_array})
-    print("Predicted category:", classification)
+    logging.info("Predicted category: %s", classification)
 
 # Get 10 texts to make a prediction
 
@@ -247,10 +254,10 @@ saver = tf.compat.v1.train.Saver()
 
 with tf.compat.v1.Session() as sess:
     saver.restore(sess, "/tmp/model.ckpt")
-    print("Model restored.")
+    logging.info("Model restored.")
 
     classification = sess.run(tf.argmax(prediction, 1), feed_dict={input_tensor: x_10_texts})
-    print("Predicted categories:", classification)
+    logging.info("Predicted categories: %s", classification)
 
 
-print("Correct categories:", np.argmax(y_10_correct_labels, 1))
+logging.info("Correct categories: %s", np.argmax(y_10_correct_labels, 1))
