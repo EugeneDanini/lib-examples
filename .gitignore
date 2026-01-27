@@ -1,5 +1,4 @@
 .env
 .venv
 lib_objgraph/example.png
-lib_fusionbrain-sdk-python/images
 mprofile_*.dat
